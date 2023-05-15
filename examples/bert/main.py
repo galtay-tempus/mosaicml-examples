@@ -7,6 +7,7 @@ from typing import Optional, cast
 
 from composer import Trainer
 from composer.utils import dist, reproducibility
+from composer.loggers import FileLogger, TensorboardLogger
 from omegaconf import DictConfig
 from omegaconf import OmegaConf as om
 
@@ -80,6 +81,8 @@ def main(cfg: DictConfig,
         build_logger(name, logger_cfg)
         for name, logger_cfg in cfg.get('loggers', {}).items()
     ]
+    loggers.append(FileLogger(filename=cfg["log_file"]))
+    loggers.append(TensorboardLogger(log_dir=cfg["tensorboard_log_dir"]))
 
     # Callbacks
     callbacks = [
