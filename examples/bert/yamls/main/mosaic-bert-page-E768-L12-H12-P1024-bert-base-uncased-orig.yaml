@@ -8,7 +8,7 @@ text_column: content_normed
 mlm_probability: 0.3 # Mosaic BERT should use 30% masking for optimal performance
 
 # Run Name
-run_name: ktlm-pages-filtered-bert-base-uncased
+run_name: mosaic-bert-page-E768-L12-H12-P1024-bert-base-uncased-orig
 
 # Model
 model:
