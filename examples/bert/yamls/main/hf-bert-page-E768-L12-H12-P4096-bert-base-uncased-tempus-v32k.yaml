@@ -1,20 +1,24 @@
 # Spec for singla A100 40GB
 
+base_path: /data/tl-prd-rwde-model-dev
+grain: page
+stage: filtered
+
 data_remote: # If blank, files must be present in data_local
-data_local: /data/tl-prd-rwde-model-dev/ktlm_ocr_corpus/ocr_pages_filtered_v1_0_0/mosaic
-tokenizer_name: bert-base-uncased
+data_local: ${base_path}/ktlm_ocr_corpus/ocr_${grain}s_${stage}_v1_0_0/mosaic
+tokenizer_name: ${base_path}/ktlm_tokenizers/ocr_${grain}s_${stage}_v1_0_0/hf_clones/bert-base-uncased/bert-base-uncased-v32k
 max_seq_len: 4096
 text_column: content_normed
 mlm_probability: 0.15 # Mosaic BERT should use 30% masking for optimal performance
 
 # Run Name
-run_name: hf-bert-page-E768-L12-H12-P4096-bert-base-uncased-tempus-v32k
+run_name: hf-bert-${grain}-E768-L12-H12-P4096-bert-base-uncased-tempus-v32k
 
 # Model
 model:
   name: hf_bert
   use_pretrained: false # Train the model from scratch. Set to true to start from the HF off-the-shelf weights.
-  pretrained_model_name: ${tokenizer_name}
+  pretrained_model_name: bert-base-uncased
   tokenizer_name: ${tokenizer_name}
   # Mosaic BERT 'base' generally uses the default architecture values for from the
   # Hugging Face BertConfig object
@@ -25,6 +29,8 @@ model:
     num_attention_heads: 12 # bert-base default
     num_hidden_layers: 12 # bert-base default
     attention_probs_dropout_prob: 0.1 # bert-base default
+    vocab_size: 32768
+    max_position_embeddings: ${max_seq_len}
 
 # Dataloaders
 train_loader:
@@ -36,7 +42,6 @@ train_loader:
     tokenizer_name: ${tokenizer_name}
     max_seq_len: ${max_seq_len}
     text_column: ${text_column}
-    predownload: 1000
     shuffle: true
     mlm_probability: ${mlm_probability}
   drop_last: true
@@ -51,7 +56,6 @@ eval_loader:
     tokenizer_name: ${tokenizer_name}
     max_seq_len: ${max_seq_len}
     text_column: ${text_column}
-    predownload: 1000
     shuffle: false
     mlm_probability: 0.15 # We alwayas evaluate at 15% masking for consistencey
   drop_last: false
@@ -78,20 +82,20 @@ algorithms:
 # Training duration and evaluation frequency
 max_duration: 1ep
 eval_interval: 2ep
-global_train_batch_size: 4096
+global_train_batch_size: 1024
 
 # System
 seed: 17
-device_eval_batch_size: 32
-device_train_microbatch_size: 32
+device_eval_batch_size: 1
+device_train_microbatch_size: 1
 precision: amp_bf16
 
 # Logging
 progress_bar: false
 log_to_console: true
 console_log_interval: 1ba
-log_file: /data/tl-prd-rwde-model-dev/ktlm_mosaic_models/${run_name}/file_logs/log.txt
-tensorboard_log_dir: /data/tl-prd-rwde-model-dev/ktlm_mosaic_models/${run_name}/tensorboard_logs
+log_file: ${base_path}/ktlm_mosaic_models/${run_name}/file_logs/log.txt
+tensorboard_log_dir: ${base_path}/ktlm_mosaic_models/${run_name}/tensorboard_logs
 
 callbacks:
   speed_monitor:
@@ -99,6 +103,6 @@ callbacks:
   lr_monitor: {}
 
 # (Optional) Checkpoint to local filesystem or remote object store
-save_interval: 500ba
+save_interval: 50ba
 save_num_checkpoints_to_keep: 3  # Important, this cleans up checkpoints saved to DISK
-save_folder: /data/tl-prd-rwde-model-dev/ktlm_mosaic_models/${run_name}/ckpt
+save_folder: ${base_path}/ktlm_mosaic_models/${run_name}/ckpt
